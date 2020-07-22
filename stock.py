@@ -4,13 +4,12 @@ from globals import *
 from bs4 import BeautifulSoup
 import requests
 
-funds = fileread.readline()
+funds = float(fileread.readline())
 portfolio = fileread.readline().strip().split(",")
 for x in range(len(portfolio)):
     portfolio[x] = portfolio[x].split("-")
     portfolio[x][1] = float(portfolio[x][1])
     portfolio[x][2] = int(portfolio[x][2])
-print(portfolio)
 
 print(f"""\nThis is a real time investment simulation. \n
 If you are new or want to reset the simulation, type !START. \n
@@ -19,6 +18,8 @@ To see a list of commands, type !COMMANDS {line}""")
 #FUNCTIONS
 
 def buy():
+    global funds
+    global portfolio
     symbol = input("Enter stock symbol: ")
     url = "https://uk.finance.yahoo.com/quote/" + symbol
     #url = "https://uk.finance.yahoo.com/quote/AAPL?p=AAPL&.tsrc=fin-srch"
@@ -31,14 +32,40 @@ def buy():
     except:
         print("ERROR - invalid stock symbol")
         return
-    print(type(price))
-    print(price)
+    print(f"Stock price: ${price}")
+    print(f"funds available: ${funds}")
+    try:
+        amount = int(input("Please insert stock amount (To cancel, insert 0): "))
+    except ValueError:
+        print("\nERROR - incorrect data type")
+        return
+    if amount < 0 or amount > 1000:
+        print("ERROR - unavailable amount")
+        return
+    elif amount == 0:
+        return
+    totalsum = amount * price
+    if totalsum > funds:
+        print("Costs exceeds available funds")
+        return
+    else:
+        portfolio.append([symbol,price,amount])
+        funds -= totalsum
+        print("Successfully purchased stock")
 
+def fund():
+    print(f"Current funds available: {funds}")
+
+def stocks():
+    print("Current stocks:")
+    for x in portfolio:
+        print(f"Symbol: {x[0]}, Bought at: ${x[1]}, Amount: {x[2]}")
 
 def start():
-    funds = input("Enter your starting amount(GBP): ")
+    global funds
+    global portfolio
     try:
-        float(funds)
+        funds = float(input("Enter your starting amount: $"))
     except ValueError:
         print("\nERROR - incorrect data type")
         return
@@ -51,17 +78,17 @@ def quit():
 def commands():
     print("""
 !ABOUT - displays information about the program and creator\n
-!BUY - displays menu to buy stocks\n
-!FUNDS - displays the current funds available\n
+!BUY - displays menu to buy stocks\n #
+!FUND - displays the current funds available\n #
 !PRICE {stock symbol} - displays live price of stock\n
 !QUIT - stops the process and closes the application\n
 !SAVE - saves current stocks and available funds\n
 !SELL - displays menu to sell your current stocks\n
-!START - clears data and prompts user to enter starting funds amount\n
-!STOCKS - displays the currently owned stocks\n
+!START - clears data and prompts user to enter starting funds amount\n #
+!STOCKS - displays the currently owned stocks\n #
     """)
 
-globals = {'!BUY' : buy, '!START' : start, '!QUIT' : quit, '!COMMANDS' : commands}
+globals = {'!BUY' : buy, '!START' : start, '!QUIT' : quit, '!COMMANDS' : commands, '!STOCKS' : stocks, '!FUND' : fund}
 
 while True:
     inp = input("Enter command: ")
